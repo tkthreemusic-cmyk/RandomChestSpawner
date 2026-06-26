@@ -1,83 +1,46 @@
-# RandomChestSpawner - Minecraft Plugin
+# RandomChestSpawner - Plugin Minecraft
 
-A Spigot/Paper plugin that spawns chests with random obtainable items at random locations for online players.
+Un plugin Spigot/Paper qui fait apparaitre des coffres avec des objets aleatoires a des emplacements varies pour les joueurs en ligne.
 
-## Features
+## Fonctionnalites
 
-- **Random Chest Spawning**: Spawns a chest with 5-18 random obtainable items
-- **Center-Based Distance**: Spawns at the center of all connected players, minimum 100 blocks away
-- **Smart Distance**: Maximum 1000 blocks, or larger if players are very spread out (respects world boundaries)
-- **Ground Placement**: Places chests **on the ground** on top of the highest solid block (never floating)
-- **World Bounds**: Coordinates clamped to world limits (-10000 to 10000 on X/Z axes)
-- **Chat Announcements**: Notifies all online players when a chest spawns with coordinates
-- **Auto-Management**: Automatically starts spawning when a player joins; stops when server is empty
-- **Periodic Spawning**: Spawns a new chest every 30 minutes when at least one player is online
+- **Apparition aleatoire de coffres**: Fait apparaitre un coffre avec 2 a 7 objets aleatoires
+- **Distance centree**: Apparait au centre de tous les joueurs connectes, minimum 200 blocs
+- **Distance intelligente**: Maximum 2000 blocs (ou plus si les joueurs sont tres eloignes)
+- **Placement au sol**: Place les coffres **sur le sol** sur le bloc solide le plus haut (jamais en lair)
+- **Limites du monde**: Coordonnees limitees a -10000 et 10000 en X/Z
+- **Notifications chat**: Previens tous les joueurs quand un coffre apparait
+- **Disparition apres pillage**: Le coffre disparait quand il est vide
+- **Gestion automatique**: Demarre automatiquement quand un joueur rejoint
+- **Apparition periodique**: Fait apparaitre un nouveau coffre toutes les 30 minutes
 
 ## Requirements
 
 - Java 17+
-- Spigot or Paper server (1.20+)
-- Maven (for building)
+- Serveur Spigot ou Paper 1.21+
 
-## Building
+## Compilation
 
 ```bash
 mvn clean package
 ```
 
-The compiled JAR will be in `target/RandomChestSpawner-1.0.0.jar`
+Le JAR compile sera dans `target/RandomChestSpawner-1.0.0.jar`.
 
 ## Installation
 
-1. Build the plugin or download the JAR
-2. Place the JAR file in your server's `plugins` folder
-3. Restart or reload your server
-4. The plugin will automatically start when players join
+1. Telechargez `RandomChestSpawner-1.0.0.jar` depuis la page des releases
+2. Copiez-le dans le dossier `plugins` de votre serveur
+3. Redemarrez votre serveur
 
-## Configuration
+## Utilisation
 
-The plugin works out-of-the-box with default settings:
+- Quand un joueur rejoint, un coffre apparait a un emplacement aleatoire
+- Des coffres supplementaires apparaissent toutes les 30 minutes
+- Les coffres contiennent 2 a 7 objets aleatoires
+- Les coordonnees sont annoncees dans le chat
+- Le coffre spawn entre 200 et 2000 blocs des joueurs
 
-- **Spawn Distance**: 100-1000 blocks from random online player
-- **Items per Chest**: 5-18 random obtainable items
-- **Spawn Interval**: Every 30 minutes
-- **Spawn Trigger**: Requires at least 1 player online
+## Licence
 
-## Commands
-
-Currently no commands are required - the plugin runs automatically.
-
-## Permissions
-
-No permissions required - all online players receive chest spawn announcements.
-
-## How It Works
-
-1. When a player joins (and is the only player), a chest spawns immediately
-2. Every 30 minutes, if players are online:
-   - A random online player is selected
-   - A random angle and distance (100-1000 blocks) is calculated
-   - The chest is placed on the topmost solid block at that location
-   - All online players see a chat message with the chest coordinates
-3. When the last player leaves, the spawn scheduler stops
-
-## File Structure
-
-```
-RandomChestSpawner/
-├── pom.xml
-├── README.md
-└── src/
-    └── main/
-        ├── java/
-        │   └── com/
-        │       └── example/
-        │           └── randomchest/
-        │               └── RandomChestPlugin.java
-        └── resources/
-            └── plugin.yml
-```
-
-## License
-
-This project is open source and can be modified as needed.
+Projet open source sous licence MIT.

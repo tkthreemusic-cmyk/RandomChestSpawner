@@ -41,7 +41,7 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         initializeValidMaterials();
         getServer().getPluginManager().registerEvents(this, this);
-        startSpawnTask();
+        // Don't start spawn task here - it starts when a player joins
         getLogger().info("RandomChestPlugin has been enabled!");
     }
 
@@ -271,8 +271,9 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
         List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
         if (onlinePlayers.size() == 1) {
             Player player = event.getPlayer();
-            player.sendMessage("§6[Coffre Aleatoire] §aBienvenue ! Les coffres aleatoires spawn toutes les 30 minutes !");
-            spawnRandomChest(onlinePlayers);
+            player.sendMessage("§6[Coffre Aleatoire] §aBienvenue ! Le premier coffre apparaitra dans 15 minutes !");
+            // Start the spawn timer (first spawn after 15 min, then every 30 min)
+            startSpawnTask();
         }
     }
 

@@ -88,8 +88,8 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
         List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
         if (!onlinePlayers.isEmpty()) {
             if (!firstChestSpawned) {
-                // First chest after 15 minutes
-                long firstDelay = 20L * 60 * 15; // 15 minutes in ticks
+                // First chest after 30 minutes
+                long firstDelay = 20L * 60 * 30; // 30 minutes in ticks
                 spawnTask = Bukkit.getScheduler().runTaskLater(this, () -> {
                     List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
                     if (!players.isEmpty()) {

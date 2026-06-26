@@ -184,18 +184,23 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
     }
 
     private void fillChestWithRandomItems(Chest chest) {
-        int itemCount = 5 + random.nextInt(14); // 5 to 18 items
-        List<ItemStack> items = new ArrayList<>();
-
+        int itemCount = 2 + random.nextInt(6); // 2 to 7 items
+        List<Integer> usedSlots = new ArrayList<>();
+        
         for (int i = 0; i < itemCount; i++) {
             String materialName = validMaterials.get(random.nextInt(validMaterials.size()));
             Material material = Material.valueOf(materialName);
-            int amount = Math.min(material.getMaxStackSize(), 1 + random.nextInt(64));
-            items.add(new ItemStack(material, amount));
+            
+            // Find a random empty slot (0-26 for chest inventory)
+            int slot;
+            do {
+                slot = random.nextInt(27); // Single chest has 27 slots
+            } while (usedSlots.contains(slot));
+            usedSlots.add(slot);
+            
+            // Place only 1 item in the stack
+            chest.getInventory().setItem(slot, new ItemStack(material, 1));
         }
-
-        ItemStack[] inventory = items.toArray(new ItemStack[0]);
-        chest.getInventory().setContents(inventory);
     }
 
     private void announceChestSpawn(Location location, List<Player> players) {

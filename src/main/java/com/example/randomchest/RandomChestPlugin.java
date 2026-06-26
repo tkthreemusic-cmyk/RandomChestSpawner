@@ -197,8 +197,8 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
             spawnTask.cancel();
         }
         
-        // Random delay between 25 and 35 minutes
-        int minutes = 25 + random.nextInt(11); // 25 to 35
+        // Random delay between 20 and 35 minutes
+        int minutes = 20 + random.nextInt(16); // 20 to 35
         long delay = 20L * 60 * minutes;
         
         spawnTask = Bukkit.getScheduler().runTaskLater(this, () -> {

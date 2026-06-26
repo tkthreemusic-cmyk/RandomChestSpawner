@@ -204,15 +204,27 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
             spawnTask.cancel();
         }
         
-        // Cycle runs every 30 minutes regardless of player count
-        // But spawn only happens when players are connected
-        spawnTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+        // Schedule next spawn with random delay (25-35 minutes)
+        scheduleNextSpawn();
+    }
+    
+    private void scheduleNextSpawn() {
+        if (spawnTask != null) {
+            spawnTask.cancel();
+        }
+        
+        // Random delay between 25 and 35 minutes
+        int minutes = 25 + random.nextInt(11); // 25 to 35
+        long delay = 20L * 60 * minutes;
+        
+        spawnTask = Bukkit.getScheduler().runTaskLater(this, () -> {
             List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
             if (!players.isEmpty()) {
                 spawnRandomChest(players);
             }
-            // If no players, just waste this tick (no chest spawns, no accumulation)
-        }, 20L * 60 * 30, 20L * 60 * 30); // 30 minutes = 20 ticks * 60 seconds * 30 minutes
+            // Schedule next spawn
+            scheduleNextSpawn();
+        }, delay);
     }
 
     private void spawnRandomChest(List<Player> players) {

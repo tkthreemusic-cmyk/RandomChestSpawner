@@ -9,6 +9,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
@@ -16,7 +17,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,8 +27,12 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
 
     private final Random random = new Random();
     private BukkitTask spawnTask = null;
+    private BukkitTask despawnTask = null;
     private final AtomicBoolean isSpawning = new AtomicBoolean(false);
     private final List<String> validMaterials = new ArrayList<>();
+    
+    // Track spawned chests and if they've been looted
+    private final Map<Location, Boolean> spawnedChests = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -92,8 +99,8 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
             // Calculate the maximum distance from center to any player
             double maxPlayerDistance = calculateMaxPlayerDistance(center, players);
             
-            // Ensure minimum distance of 100 blocks, max of 1000 (or player spread if larger)
-            double spawnDistance = Math.max(100, Math.min(1000, maxPlayerDistance));
+            // Ensure minimum distance of 200 blocks, max of 2000 (or player spread if larger)
+            double spawnDistance = Math.max(200, Math.min(2000, maxPlayerDistance));
 
             // Add some randomness to the angle
             double angle = random.nextDouble() * 2 * Math.PI;
@@ -124,6 +131,10 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
 
             if (chestBlock.getState() instanceof Chest chest) {
                 fillChestWithRandomItems(chest);
+                
+                // Track this chest as not yet looted
+                spawnedChests.put(chestLocation, false);
+                
                 announceChestSpawn(chestLocation, players);
             }
         } finally {
@@ -207,7 +218,7 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
         String coords = String.format("(%.0f, %d, %.0f)",
             location.getX(), location.getBlockY(), location.getZ());
         
-        String message = "§6[Random Chest] §aA random chest has spawned at §e" + coords + " §ain the world §b" 
+        String message = "§6[Coffre Aleatoire] §aUn coffre aleatoire est apparait en §e" + coords + " §a dans le monde §b" 
             + location.getWorld().getName() + "§a!";
         
         for (Player player : players) {
@@ -220,7 +231,7 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
         List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
         if (onlinePlayers.size() == 1) {
             Player player = event.getPlayer();
-            player.sendMessage("§6[Random Chest] §aWelcome! Random chests will spawn every 30 minutes!");
+            player.sendMessage("§6[Coffre Aleatoire] §aBienvenue ! Les coffres aleatoires spawn toutes les 30 minutes !");
             spawnRandomChest(onlinePlayers);
         }
     }
@@ -229,6 +240,50 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (Bukkit.getOnlinePlayers().isEmpty() && spawnTask != null) {
             spawnTask.cancel();
+        }
+    }
+    
+    @EventHandler
+    public void onChestClose(InventoryCloseEvent event) {
+        // Check if this is a chest inventory
+        if (event.getInventory().getHolder() instanceof Chest chest) {
+            Location chestLocation = chest.getLocation();
+            
+            // Check if this is one of our spawned chests and not already marked as looted
+            if (spawnedChests.containsKey(chestLocation) && !spawnedChests.get(chestLocation)) {
+                // Check if the chest is empty
+                boolean isEmpty = true;
+                for (ItemStack item : event.getInventory().getContents()) {
+                    if (item != null && item.getType() != Material.AIR) {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+                
+                if (isEmpty) {
+                    // Mark as looted
+                    spawnedChests.put(chestLocation, true);
+                    
+                    // Remove the chest after a short delay (1 second)
+                    Bukkit.getScheduler().runTaskLater(this, () -> {
+                        Block block = chestLocation.getBlock();
+                        if (block.getType() == Material.CHEST) {
+                            block.setType(Material.AIR);
+                            spawnedChests.remove(chestLocation);
+                            
+                            // Notify nearby players
+                            for (Player player : Bukkit.getOnlinePlayers()) {
+                                if (player.getWorld().equals(chestLocation.getWorld())) {
+                                    double distance = player.getLocation().distance(chestLocation);
+                                    if (distance < 100) {
+                                        player.sendMessage("§6[Coffre Aleatoire] §7Un coffre a ete vide et a disparu !");
+                                    }
+                                }
+                            }
+                        }
+                    }, 20L); // 20 ticks = 1 second
+                }
+            }
         }
     }
 }

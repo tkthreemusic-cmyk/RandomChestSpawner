@@ -270,8 +270,6 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
         if (onlinePlayers.size() == 1) {
-            Player player = event.getPlayer();
-            player.sendMessage("§6[Coffre Aleatoire] §aBienvenue ! Le premier coffre apparaitra dans 15 minutes !");
             // Start the spawn timer (first spawn after 15 min, then every 30 min)
             startSpawnTask();
         }

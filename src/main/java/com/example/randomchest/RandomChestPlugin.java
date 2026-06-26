@@ -33,6 +33,9 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
     
     // Track spawned chests and if they've been looted
     private final Map<Location, Boolean> spawnedChests = new HashMap<>();
+    
+    // Track if first chest has been spawned (resets when no players)
+    private boolean firstChestSpawned = false;
 
     @Override
     public void onEnable() {
@@ -77,10 +80,47 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
     }
 
     private void startSpawnTask() {
+        // Cancel existing task if any
+        if (spawnTask != null) {
+            spawnTask.cancel();
+        }
+        
+        List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
+        if (!onlinePlayers.isEmpty()) {
+            if (!firstChestSpawned) {
+                // First chest after 15 minutes
+                long firstDelay = 20L * 60 * 15; // 15 minutes in ticks
+                spawnTask = Bukkit.getScheduler().runTaskLater(this, () -> {
+                    List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+                    if (!players.isEmpty()) {
+                        firstChestSpawned = true;
+                        spawnRandomChest(players);
+                    }
+                }, firstDelay);
+                
+                // Start periodic 30-minute spawning after first chest
+                Bukkit.getScheduler().runTaskLater(this, () -> {
+                    if (firstChestSpawned) {
+                        schedulePeriodicSpawning();
+                    }
+                }, firstDelay);
+            } else {
+                // Already spawned first chest, start periodic spawning
+                schedulePeriodicSpawning();
+            }
+        }
+    }
+    
+    private void schedulePeriodicSpawning() {
+        if (spawnTask != null) {
+            spawnTask.cancel();
+        }
+        
+        // Schedule recurring 30-minute spawns
         spawnTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            List<Player> onlinePlayers = new ArrayList<>(Bukkit.getOnlinePlayers());
-            if (!onlinePlayers.isEmpty()) {
-                spawnRandomChest(onlinePlayers);
+            List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+            if (!players.isEmpty()) {
+                spawnRandomChest(players);
             }
         }, 20L * 60 * 30, 20L * 60 * 30); // 30 minutes = 20 ticks * 60 seconds * 30 minutes
     }
@@ -238,8 +278,12 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        if (Bukkit.getOnlinePlayers().isEmpty() && spawnTask != null) {
-            spawnTask.cancel();
+        if (Bukkit.getOnlinePlayers().isEmpty()) {
+            if (spawnTask != null) {
+                spawnTask.cancel();
+            }
+            // Reset first spawn flag so next player gets 15-min delay
+            firstChestSpawned = false;
         }
     }
     

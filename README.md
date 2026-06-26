@@ -12,8 +12,7 @@ Un plugin Spigot/Paper qui fait apparaitre des coffres avec des objets aleatoire
 - **Notifications chat**: Previens tous les joueurs quand un coffre apparait
 - **Disparition apres pillage**: Le coffre disparait quand il est vide
 - **Timing**:
-  - Premier coffre: 15 minutes apres connexion
-  - Coffres suivants: toutes les 30 minutes
+  - Un coffre apparait toutes les 30 minutes des qu'un joueur est connecte
   - Reset du compteur quand aucun joueur connecte
 
 ## Requirements
@@ -37,9 +36,8 @@ Le JAR compile sera dans `target/RandomChestSpawner-1.0.0.jar`.
 
 ## Utilisation
 
-- Quand un joueur rejoint, le timer de 15 minutes demarre
-- Premier coffre apparait 15 minutes apres connexion
-- Coffres suivants toutes les 30 minutes
+- Quand un joueur rejoint, le timer de 30 minutes demarre silencieusement
+- Un coffre apparait toutes les 30 minutes
 - Les coffres contiennent 2 a 7 objets aleatoires
 - Les coordonnees sont annoncees dans le chat
 - Le coffre disparait quand il est vide (pille)

@@ -84,24 +84,35 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
         }
 
         try {
-            Player targetPlayer = players.get(random.nextInt(players.size()));
-            World world = targetPlayer.getWorld();
+            World world = players.get(0).getWorld();
 
-            double minDistance = 100;
-            double maxDistance = 1000;
+            // Calculate the center point of all connected players
+            Location center = calculatePlayersCenter(players);
+            
+            // Calculate the maximum distance from center to any player
+            double maxPlayerDistance = calculateMaxPlayerDistance(center, players);
+            
+            // Ensure minimum distance of 100 blocks, max of 1000 (or player spread if larger)
+            double spawnDistance = Math.max(100, Math.min(1000, maxPlayerDistance));
 
-            Location playerLocation = targetPlayer.getLocation();
+            // Add some randomness to the angle
             double angle = random.nextDouble() * 2 * Math.PI;
-            double distance = minDistance + random.nextDouble() * (maxDistance - minDistance);
+            double offsetX = spawnDistance * Math.cos(angle);
+            double offsetZ = spawnDistance * Math.sin(angle);
 
-            int offsetX = (int) (distance * Math.cos(angle));
-            int offsetZ = (int) (distance * Math.sin(angle));
+            // Calculate target coordinates and clamp to world bounds
+            double targetX = center.getX() + offsetX;
+            double targetZ = center.getZ() + offsetZ;
+            
+            // Clamp to world boundaries (-10000 to 10000)
+            targetX = Math.max(-10000, Math.min(10000, targetX));
+            targetZ = Math.max(-10000, Math.min(10000, targetZ));
 
-            int baseX = playerLocation.getBlockX() + offsetX;
-            int baseZ = playerLocation.getBlockZ();
-            int baseY = playerLocation.getBlockY();
+            int finalX = (int) Math.floor(targetX);
+            int finalZ = (int) Math.floor(targetZ);
 
-            Location chestLocation = findTopBlock(world, baseX, baseY, baseZ);
+            // Find the highest solid block at this X,Z coordinate and place chest on top
+            Location chestLocation = findHighestBlockOnGround(world, finalX, finalZ);
 
             if (chestLocation == null) {
                 getLogger().warning("Could not find a valid location for chest spawn.");
@@ -120,30 +131,56 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    private Location findTopBlock(World world, int x, int z, int playerY) {
-        int searchStart = Math.max(1, playerY - 50);
-        int searchEnd = Math.min(world.getMaxHeight() - 1, playerY + 50);
+    private Location calculatePlayersCenter(List<Player> players) {
+        double sumX = 0, sumZ = 0;
+        for (Player player : players) {
+            sumX += player.getLocation().getX();
+            sumZ += player.getLocation().getZ();
+        }
+        double centerX = sumX / players.size();
+        double centerZ = sumZ / players.size();
+        
+        Location firstPlayerLoc = players.get(0).getLocation();
+        return new Location(firstPlayerLoc.getWorld(), centerX, firstPlayerLoc.getY(), centerZ);
+    }
 
-        for (int y = searchEnd; y >= searchStart; y--) {
+    private double calculateMaxPlayerDistance(Location center, List<Player> players) {
+        double maxDistance = 0;
+        for (Player player : players) {
+            double dx = player.getLocation().getX() - center.getX();
+            double dz = player.getLocation().getZ() - center.getZ();
+            double distance = Math.sqrt(dx * dx + dz * dz);
+            maxDistance = Math.max(maxDistance, distance);
+        }
+        return maxDistance;
+    }
+
+    private Location findHighestBlockOnGround(World world, int x, int z) {
+        // Search from world height down to find the highest solid block
+        int maxHeight = world.getMaxHeight() - 1;
+        
+        for (int y = maxHeight; y > 0; y--) {
             Block block = world.getBlockAt(x, y, z);
-            if (isSolidBlock(block) && !isLiquidBlock(block)) {
-                Block above = world.getBlockAt(x, y + 1, z);
-                if (above.getType() == Material.AIR || above.getType() == Material.CAVE_AIR) {
-                    return new Location(world, x, y + 1, z);
-                }
+            if (isSolidGroundBlock(block)) {
+                // Return the location on top of this block (chest sits on it, not inside)
+                return new Location(world, x, y + 1, z);
             }
         }
-        return new Location(world, x, searchEnd, z);
+        return null;
     }
 
-    private boolean isSolidBlock(Block block) {
+    private boolean isSolidGroundBlock(Block block) {
         Material type = block.getType();
-        return type.isSolid() && type != Material.BEDROCK && type != Material.BARRIER;
-    }
-
-    private boolean isLiquidBlock(Block block) {
-        Material type = block.getType();
-        return type == Material.WATER || type == Material.LAVA;
+        // Only allow blocks that can have things placed on top and are natural ground blocks
+        return type.isSolid() && 
+               type != Material.BEDROCK && 
+               type != Material.BARRIER &&
+               type != Material.LAVA &&
+               type != Material.WATER &&
+               type != Material.GLASS &&
+               type != Material.GLASS_PANE &&
+               !type.name().contains("FENCE") &&
+               !type.name().contains("WALL");
     }
 
     private void fillChestWithRandomItems(Chest chest) {

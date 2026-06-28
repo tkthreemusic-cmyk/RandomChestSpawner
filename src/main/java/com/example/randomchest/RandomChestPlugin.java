@@ -394,13 +394,14 @@ public class RandomChestPlugin extends JavaPlugin implements Listener {
                             block.setType(Material.AIR);
                             spawnedChests.remove(chestLocation);
                             
-                            // Notify nearby players
+                            // Notify ALL connected players
+                            String coords = String.format("(%.0f, %d, %.0f)",
+                                chestLocation.getX(), chestLocation.getBlockY(), chestLocation.getZ());
+                            String message = "§6[Coffre Aleatoire] §7Un coffre a ete vide et a disparu en §e" + coords + "§7!";
+                            
                             for (Player player : Bukkit.getOnlinePlayers()) {
                                 if (player.getWorld().equals(chestLocation.getWorld())) {
-                                    double distance = player.getLocation().distance(chestLocation);
-                                    if (distance < 100) {
-                                        player.sendMessage("§6[Coffre Aleatoire] §7Un coffre a ete vide et a disparu !");
-                                    }
+                                    player.sendMessage(message);
                                 }
                             }
                         }
